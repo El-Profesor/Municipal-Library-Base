@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity()]
 class Book
@@ -14,9 +15,17 @@ class Book
     private ?int $id = null;
 
     #[ORM\Column(length: 13)]
+    #[Assert\Type(
+        type: 'digit',
+        message: 'L\'ISBN ne peut être constitué que de chiffres.'
+    )]
     private ?string $isbn = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\Length(
+        max: 10,
+        maxMessage: 'La longueur du titre ne doit pas excéder 10 caractères.'
+    )]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
