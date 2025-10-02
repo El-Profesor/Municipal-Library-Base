@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User
@@ -29,6 +30,14 @@ class User
     private ?string $lastName = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\Length(
+        min: 5,
+        minMessage: 'Le prénom doit contenir au minimum 5 caractères.'
+    )]
+    #[Assert\Type(
+        type: 'string',
+        message: 'Le prénom ne doit contenir que des caractères.',
+    )]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 150)]
