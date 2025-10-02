@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Book;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,8 +38,15 @@ final class DefaultController extends AbstractController
     #[Route('/{id}', name: 'app_book_show', methods: ['GET'])]
     public function show(Book $book): Response
     {
-        dd($book);
-        return new Response('Livre consulté : ' . $book->getTitle());
+        //dd($book);
+        $user = $book->getUser();
+        if ($user === null) {
+            $message = "[Disponible]";
+        } else {
+            $message = "[emprunté par " . $book->getUser()->getFirstname() . " le " . $book->getIssueDate()->format('d/m/Y') . "]";
+        }
+        $message = 'Livre "' . $book->getTitle() . '" ' .  $message;
+        return new Response($message);
     }
 
     #[Route('/{id}/edit', name: 'app_book_edit', methods: ['GET', 'POST'])]
@@ -57,4 +65,34 @@ religion...');
         $entityManager->flush();
         return new Response('Identifiant du livre supprimé : ' . $book->getId());
     }
+
+    #[Route('/user/new', name: 'app_user_new', methods: ['GET', 'POST'])]
+    public function createUser(EntityManagerInterface $entityManager): Response
+    {
+        $user = new User();
+        $user->setEmail("john.doe@mailbox.com");
+        $user->setPassword("password");
+        $user->setRoles(["ROLE_USER"]);
+        $user->setLastName("Doe");
+        $user->setFirstName("John");
+        $user->setAddress("Avenue du Maréchal Juin");
+        $user->setZipCode("33000");
+        $user->setBirthDate(new \DateTime());
+        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setUpdatedAt(new \DateTimeImmutable());
+        $entityManager->persist($user);
+        $entityManager->flush();
+        return new Response('Identifiant de l\'utilisateur : ' . $user->getId());
+    }
+
+    #[Route('/{book}/{user}/loan', name: 'app_book_user_loan', methods: ['GET', 'POST'])]
+    public function loan(Book $book, User $user, EntityManagerInterface $entityManager): Response
+    {
+        $book->setUser($user);
+        $book->setIssueDate(new \DateTimeImmutable());
+        $entityManager->flush();
+        $message = 'Livre "' . $book->getTitle() . '" emprunté par ' . $user->getFirstName() . " le " . $book->getIssueDate()->format('d/m/Y');
+        return new Response($message);
+    }
+
 }
