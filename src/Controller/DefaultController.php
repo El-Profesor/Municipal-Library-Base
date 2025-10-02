@@ -4,10 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Book;
 use App\Entity\User;
+use App\Form\BookType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/book')]
 final class DefaultController extends AbstractController
@@ -21,18 +24,32 @@ final class DefaultController extends AbstractController
     }
 
     #[Route('/new', name: 'app_book_new', methods: ['GET', 'POST'])]
-    public function new(EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+//        $book = new Book();
+//        $book->setIsbn('9782070752447');
+//        $book->setTitle('Villa vortex');
+//        $book->setSummary('11 septembre 2001, un nouveau monde commence...');
+//        $book->setPublicationYear(2003);
+//        $book->setCreatedAt(new \Datetime());
+//        $book->setUpdatedAt(new \Datetime());
+
         $book = new Book();
-        $book->setIsbn('9782070752447');
-        $book->setTitle('Villa vortex');
-        $book->setSummary('11 septembre 2001, un nouveau monde commence...');
-        $book->setPublicationYear(2003);
-        $book->setCreatedAt(new \Datetime());
-        $book->setUpdatedAt(new \Datetime());
-        $entityManager->persist($book);
-        $entityManager->flush();
-        return new Response('Identifiant du livre ajouté : ' . $book->getId());
+        $form = $this->createForm(BookType::class, $book);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($book);
+            $entityManager->flush();
+        }
+
+        return $this->render('book/new.html.twig', [
+            'form' => $form,
+        ]);
+
+//        $entityManager->persist($book);
+//        $entityManager->flush();
+//        return new Response('Identifiant du livre ajouté : ' . $book->getId());
     }
 
     #[Route('/{id}', name: 'app_book_show', methods: ['GET'])]
@@ -67,7 +84,8 @@ religion...');
     }
 
     #[Route('/user/new', name: 'app_user_new', methods: ['GET', 'POST'])]
-    public function createUser(EntityManagerInterface $entityManager): Response
+    public function createUser(EntityManagerInterface $entityManager, ValidatorInterface
+    $validator): Response
     {
         $user = new User();
         $user->setEmail("john.doe@mailbox.com");
@@ -80,9 +98,16 @@ religion...');
         $user->setBirthDate(new \DateTime());
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setUpdatedAt(new \DateTimeImmutable());
+
+        $errors = $validator->validate($user);
+        if (count($errors) > 0) {
+            return $this->render('user/validate.html.twig', array(
+                'errors' => $errors,
+            ));
+        }
         $entityManager->persist($user);
         $entityManager->flush();
-        return new Response('Identifiant de l\'utilisateur : ' . $user->getId());
+        return new Response('Identifiant du lecteur ajouté : ' . $user->getId());
     }
 
     #[Route('/{book}/{user}/loan', name: 'app_book_user_loan', methods: ['GET', 'POST'])]
